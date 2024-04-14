@@ -197,13 +197,7 @@ void handle_meta_command(char *command) {
     if (strcmp(command, ".EXIT") == 0) {
         exit(0);
     } else if (strcmp(command, ".HELP") == 0) {
-        printf("Meta commands:\n");
-        printf(".exit - Exit the program.\n");
-        printf(".help - Display this help information.\n");
-        printf("Create table: CREATE TABLE <table_name> (<field1_name> <field1_type>, <field2_name> <field2_type>, ...)\n");
-        printf("Show tables: SHOW TABLES\n");
-        printf("Select all from table: SELECT * FROM <table_name>\n");
-        printf("Insert values into table: INSERT INTO <table_name> VALUES (<value1>, <value2>, ...)\n");
+        printf("Meta commands:\n.exit - Exit the program.\n.help - Display this help information.\nCreate table: CREATE TABLE <table_name> (<field1_name> <field1_type>, <field2_name> <field2_type>, ...)\n");
     } else {
         printf("Unrecognized command: %s\n", command);
     }

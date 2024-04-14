@@ -6,15 +6,14 @@
 #define MAX_TABLES 10
 #define MAX_FIELDS 10
 #define MAX_FIELD_NAME_LENGTH 50
-#define MAX_VALUES 100
+#define MAX_STRING_LENGTH 100
 
 // Structure for a string field in a table
 typedef struct {
     char name[MAX_FIELD_NAME_LENGTH];
-    char *stringValues[MAX_VALUES];
-    int intValues[MAX_VALUES];
+    char stringValue[MAX_STRING_LENGTH];
+    int intValue;
     char type[MAX_FIELD_NAME_LENGTH];
-    int num_values;
 } Field;
 
 // Structure for a table
@@ -29,29 +28,6 @@ typedef struct {
     Table tables[MAX_TABLES];
     int num_tables;
 } Schema;
-
-void trim(char *s) {
-    int i = strlen(s)-1;
-    while (i > 0) {
-        // Decrements if a whitespace character is found
-        if (s[i] == ' ' || s[i] == '\t' || s[i] == '\n') i--;
-        else break;
-    }
-    // Puts the null-terminator before whitespace
-    s[i+1] = '\0';
-    int count = 0;
-    // Increments if a whitespace character is found
-    while (s[count] == ' ' || s[count] == '\t' || s[count] == '\n') count++;
-    if (count != 0) {
-        i = 0;
-        // Shifts the string to the beginning
-        while (s[i+count] != '\0') {
-            s[i] = s[i+count];
-            i++;
-        }
-        s[i] = '\0';
-    }
-}
 
 // Function to create a new table
 int create_table(Schema *schema, char *table_name, Field *fields, int num_fields) {
@@ -68,30 +44,6 @@ int create_table(Schema *schema, char *table_name, Field *fields, int num_fields
     return 1;
 }
 
-void print_table_values(Schema *schema, char *table_name) {
-    for (int i = 0; i < schema -> num_tables; i++) {
-        if (strcmp(schema -> tables[i].name, table_name) == 0) {
-            printf("Table name: %s\n", schema -> tables[i].name);
-            for (int j = 0; j < schema -> tables[i].num_fields; j++) {
-                printf("%s: ", schema -> tables[i].fields[j].name);
-                for (int k = 0; k < schema -> tables[i].fields[j].num_values-1; k++) {
-                    if (strcmp(schema -> tables[i].fields[j].type, "STRING") == 0) {
-                        printf("%s, ", schema -> tables[i].fields[j].stringValues[k]);
-                    } else {
-                        printf("%d, ", schema -> tables[i].fields[j].intValues[k]);
-                    }
-                }
-                if (strcmp(schema -> tables[i].fields[j].type, "STRING") == 0) {
-                    printf("%s\n", schema -> tables[i].fields[j].stringValues[schema -> tables[i].fields[j].num_values-1]);
-                } else {
-                    printf("%d\n", schema -> tables[i].fields[j].intValues[schema -> tables[i].fields[j].num_values-1]);
-                }
-            }
-            return;
-        }
-    }
-    printf("Table not found.\n");
-}
 // Function to execute query language commands
 void execute_query(Schema *schema, char *query) {
     // For simplicity, assume the query is in the format:
@@ -105,7 +57,7 @@ void execute_query(Schema *schema, char *query) {
             strcpy(table_name, token);
             int num_fields = 0;
             Field fields[MAX_FIELDS];
-            while ((token = strtok(NULL, " ,()"))) {
+            while ((token = strtok(NULL, " ,)"))) {
                 if (strcmp(token, "STRING") == 0) {
                     strcpy(fields[num_fields++].type, "STRING");
                 } else if (strcmp(token, "INT") == 0) {
@@ -145,48 +97,23 @@ void execute_query(Schema *schema, char *query) {
                 printf("Invalid query.\n");
                 return;
             }
-            print_table_values(schema, token);   
-        }
-    } else if (strcmp(token, "INSERT") == 0) {
-        token = strtok(NULL, " ");
-        if (strcmp(token, "INTO") != 0) {
-            printf("Invalid syntax");
-            return;
-        }
-        token = strtok(NULL, " ");
-        for (int i = 0; i < schema -> num_tables; i++) {
-            if (strcmp(schema -> tables[i].name, token) == 0) {
-                token = strtok(NULL, " ");
-                if (strcmp(token, "VALUES") != 0) {
-                    printf("Invalid query.\n");
+            for (int i = 0; i < schema -> num_tables; i++) {
+                if (strcmp(schema -> tables[i].name, token) == 0) {
+                    printf("Table name: %s\n", schema -> tables[i].name);
+                    for (int j = 0; j < schema -> tables[i].num_fields; j++) {
+                        printf("%s: ", schema -> tables[i].fields[j].name);
+                        printf("%s\n", schema -> tables[i].fields[j].type);
+                        if (strcmp(schema -> tables[i].fields[j].type, "STRING") == 0) {
+                            printf("%s\n", schema -> tables[i].fields[j].stringValue);
+                        } else {
+                            printf("%d\n", schema -> tables[i].fields[j].intValue);
+                        }
+                    }
                     return;
                 }
-                for (int j = 0; j < schema -> tables[i].num_fields; j++) {
-                    token = strtok(NULL, ",()");
-                    if (token == NULL) {
-                        printf("Not enough values.\n");
-                        return;
-                    }
-                    trim(token);
-                    if (strcmp(schema -> tables[i].fields[j].type, "STRING") == 0) {
-                        char *value = malloc(strlen(token) + 1);
-                        strcpy(value, token);
-                        schema -> tables[i].fields[j].stringValues[schema -> tables[i].fields[j].num_values++] = value;
-                    } else {
-                        int value = atoi(token);
-                        schema -> tables[i].fields[j].intValues[schema -> tables[i].fields[j].num_values++] = value;
-                    }
-                }   
-                token = strtok(NULL, " ,()");
-                if (token != NULL) {
-                    printf("Too many values.\n");
-                    return;
-                }
-                printf("Values inserted successfully.\n");
-                return;
             }
+            printf("Table not found.\n");
         }
-        printf("Table not found.\n");
     } else {
         printf("Invalid query.\n");
     }
@@ -197,13 +124,7 @@ void handle_meta_command(char *command) {
     if (strcmp(command, ".EXIT") == 0) {
         exit(0);
     } else if (strcmp(command, ".HELP") == 0) {
-        printf("Meta commands:\n");
-        printf(".exit - Exit the program.\n");
-        printf(".help - Display this help information.\n");
-        printf("Create table: CREATE TABLE <table_name> (<field1_name> <field1_type>, <field2_name> <field2_type>, ...)\n");
-        printf("Show tables: SHOW TABLES\n");
-        printf("Select all from table: SELECT * FROM <table_name>\n");
-        printf("Insert values into table: INSERT INTO <table_name> VALUES (<value1>, <value2>, ...)\n");
+        printf("Meta commands:\n.exit - Exit the program.\n.help - Display this help information.\nCreate table: CREATE TABLE <table_name> (<field1_name> <field1_type>, <field2_name> <field2_type>, ...)\n");
     } else {
         printf("Unrecognized command: %s\n", command);
     }

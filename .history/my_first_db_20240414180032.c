@@ -92,6 +92,16 @@ void print_table_values(Schema *schema, char *table_name) {
     }
     printf("Table not found.\n");
 }
+
+Table find_table(Schema *schema, char *table_name) {
+    for (int i = 0; i < schema -> num_tables; i++) {
+        if (strcmp(schema -> tables[i].name, table_name) == 0) {
+            return schema -> tables[i];
+        }
+    }
+    printf("Table not found.\n");
+}
+
 // Function to execute query language commands
 void execute_query(Schema *schema, char *query) {
     // For simplicity, assume the query is in the format:
@@ -187,7 +197,13 @@ void execute_query(Schema *schema, char *query) {
             }
         }
         printf("Table not found.\n");
-    } else {
+    } else if (strcmp(token, "DELETE") == 0) {
+        if (strcmp(token, "FROM") != 0) {
+            printf("Invalid query.\n");
+            return;
+        }
+        
+    }else {
         printf("Invalid query.\n");
     }
 }
@@ -197,13 +213,7 @@ void handle_meta_command(char *command) {
     if (strcmp(command, ".EXIT") == 0) {
         exit(0);
     } else if (strcmp(command, ".HELP") == 0) {
-        printf("Meta commands:\n");
-        printf(".exit - Exit the program.\n");
-        printf(".help - Display this help information.\n");
-        printf("Create table: CREATE TABLE <table_name> (<field1_name> <field1_type>, <field2_name> <field2_type>, ...)\n");
-        printf("Show tables: SHOW TABLES\n");
-        printf("Select all from table: SELECT * FROM <table_name>\n");
-        printf("Insert values into table: INSERT INTO <table_name> VALUES (<value1>, <value2>, ...)\n");
+        printf("Meta commands:\n.exit - Exit the program.\n.help - Display this help information.\nCreate table: CREATE TABLE <table_name> (<field1_name> <field1_type>, <field2_name> <field2_type>, ...)\n");
     } else {
         printf("Unrecognized command: %s\n", command);
     }

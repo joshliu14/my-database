@@ -74,17 +74,12 @@ void print_table_values(Schema *schema, char *table_name) {
             printf("Table name: %s\n", schema -> tables[i].name);
             for (int j = 0; j < schema -> tables[i].num_fields; j++) {
                 printf("%s: ", schema -> tables[i].fields[j].name);
-                for (int k = 0; k < schema -> tables[i].fields[j].num_values-1; k++) {
+                for (int k = 0; k < schema -> tables[i].fields[j].num_values; k++) {
                     if (strcmp(schema -> tables[i].fields[j].type, "STRING") == 0) {
-                        printf("%s, ", schema -> tables[i].fields[j].stringValues[k]);
+                        printf("%s\n", schema -> tables[i].fields[j].stringValues[k]);
                     } else {
-                        printf("%d, ", schema -> tables[i].fields[j].intValues[k]);
+                        printf("%d\n", schema -> tables[i].fields[j].intValues[k]);
                     }
-                }
-                if (strcmp(schema -> tables[i].fields[j].type, "STRING") == 0) {
-                    printf("%s\n", schema -> tables[i].fields[j].stringValues[schema -> tables[i].fields[j].num_values-1]);
-                } else {
-                    printf("%d\n", schema -> tables[i].fields[j].intValues[schema -> tables[i].fields[j].num_values-1]);
                 }
             }
             return;
@@ -169,12 +164,9 @@ void execute_query(Schema *schema, char *query) {
                     }
                     trim(token);
                     if (strcmp(schema -> tables[i].fields[j].type, "STRING") == 0) {
-                        char *value = malloc(strlen(token) + 1);
-                        strcpy(value, token);
-                        schema -> tables[i].fields[j].stringValues[schema -> tables[i].fields[j].num_values++] = value;
+                        strcpy(schema -> tables[i].fields[j].stringValue, token);
                     } else {
-                        int value = atoi(token);
-                        schema -> tables[i].fields[j].intValues[schema -> tables[i].fields[j].num_values++] = value;
+                        schema -> tables[i].fields[j].intValue = atoi(token);
                     }
                 }   
                 token = strtok(NULL, " ,()");
@@ -197,13 +189,7 @@ void handle_meta_command(char *command) {
     if (strcmp(command, ".EXIT") == 0) {
         exit(0);
     } else if (strcmp(command, ".HELP") == 0) {
-        printf("Meta commands:\n");
-        printf(".exit - Exit the program.\n");
-        printf(".help - Display this help information.\n");
-        printf("Create table: CREATE TABLE <table_name> (<field1_name> <field1_type>, <field2_name> <field2_type>, ...)\n");
-        printf("Show tables: SHOW TABLES\n");
-        printf("Select all from table: SELECT * FROM <table_name>\n");
-        printf("Insert values into table: INSERT INTO <table_name> VALUES (<value1>, <value2>, ...)\n");
+        printf("Meta commands:\n.exit - Exit the program.\n.help - Display this help information.\nCreate table: CREATE TABLE <table_name> (<field1_name> <field1_type>, <field2_name> <field2_type>, ...)\n");
     } else {
         printf("Unrecognized command: %s\n", command);
     }
